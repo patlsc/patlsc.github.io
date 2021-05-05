@@ -1,0 +1,163 @@
+<html>
+<head>
+<title>Differential Equation Viewer</title>
+<style>
+html, body {
+	background-color: #000000;
+	color: white;
+	padding: 0px;
+	margin: 0px;
+	width: 100%;
+	height: 100%;
+	font-family: sans-serif;
+}
+button {
+	font-size: 16px;
+	width: 200px;
+	height: 50px;
+}
+#settings {
+	height: 100%;
+	width: 15%;
+	background-color: rgba(0,0,0,0.8);
+	z-index: 1;
+	top: 0;
+	left: 0;
+	position: fixed;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+#maindisp {
+	height: 100%;
+	width: 85%;
+	top: 0;
+	right: 0;
+	position: fixed;
+	overflow: scroll;
+}
+canvas {
+
+}
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+</style>
+</head>
+<body>
+
+<div id="maindisp"><canvas id="display" width="1000" height="1000" onclick="draw_mouse_line(event)"></canvas></div>
+<script src="./diffeq.js"></script>
+
+<div id="settings">
+<button onclick="update_settings()">Render</button>
+<button onclick="save_image()">Save Image</button>
+
+<div id="options">
+	<div class="title">X'</div>
+	<div class="option-input"><textarea id="xp">y</textarea></div>
+	<div class="title">Y'</div>
+	<div class="option-input"><textarea id="yp">-x+0.3*y</textarea></div>
+	<div class="title">X Range</div>
+	<div class="option-input"><textarea id="xrange">[-10, 10]</textarea></div>
+	<div class="title">Y Range</div>
+	<div class="option-input"><textarea id="yrange">[-10, 10]</textarea></div>
+	<div class="title">X Spawn</div>
+	<div class="option-input"><textarea id="xspawn">[-5, 5]</textarea></div>
+	<div class="title">Y Spawn</div>
+	<div class="option-input"><textarea id="yspawn">[-5, 5]</textarea></div>
+	<div class="title">Delta</div>
+	<div class="option-input"><textarea id="del">0.005</textarea></div>
+	<div class="title">Iterations</div>
+	<div class="option-input"><textarea id="iter">500</textarea></div>
+	<div class="title">Stochastic Lines</div>
+	<div class="option-input"><input type="checkbox" id="stochastic" checked="true"></div>
+	<div class="title">X Lines</div>
+	<div class="option-input"><textarea id="backx">20</textarea></div>
+	<div class="title">Y Lines</div>
+	<div class="option-input"><textarea id="backy">20</textarea></div>
+	<div class="title">X resolution</div>
+	<div class="option-input"><textarea id="xres"></textarea></div>
+	<div class="title">Y Resolution</div>
+	<div class="option-input"><textarea id="yres"></textarea></div>
+	<div class="title">Line Width</div>
+	<div class="option-input"><textarea id="lwidth">3</textarea></div>
+	<div class="title">Line Alpha</div>
+	<div class="option-input"><textarea id="lalpha">1</textarea></div>
+	<div class="title">Draw Coords</div>
+	<div class="option-input"><input type="checkbox" id="coords"></div>
+	<div class="title">Coords Alpha</div>
+	<div class="option-input"><textarea id="coordsalpha">0.1</textarea></div>
+	<div class="title">Color Array</div>
+	<div class="option-input"><textarea style="height: 200px" id="colorarray">[[0,0,255], [0,255,255], [255,255,0], [255,0,0]]</textarea></div>
+	<div class="title">Color Presets</div>
+	<div class="option-input"><select name="Presets" id="colorpreset" onchange="change_color_preset()">
+			<option value="rgb">RGB</option>
+			<option value="white-black">W&B</option>
+			<option value="greyscale">Greyscale</option>
+			<option value="white">White</option>
+			<option value="blue-purple">Blue/Purple</option>
+			<option value="blue-purple-fade">Blue/Purple 2</option>
+			<option value="red-dark-blue">Red/Blue</option>
+			<option value="green-orange">Green/Orange</option>
+			<option value="cobalt">Cobalt</option>
+	</select></div>
+	<div class="title">Color Quantiles</div>
+	<div class="option-input"><textarea id="quantiles">50</textarea>
+	<div class="title">Invert Colors</div>
+	<div class="option-input"><input type="checkbox" id="invert"></div>
+	<div class="title">Background Color</div>
+	<div class="option-input"><textarea id="backgroundcol">[0,0,0]</textarea></div>
+	<div class="title">Lp Norm</div>
+	<div class="option-input"><textarea id="lp">2</textarea></div>
+	<div class="title">Crop Lines</div>
+	<div class="option-input"><input type="checkbox" id="crop"></div>
+</div>
+
+<p>
+X/Y Derivatives - expressions in vanilla javascript using "x" and "y" as unknowns. Use the Math library for special commands e.g. "Math.sqrt(y)". You can use Math.random() to give it a randomized derivative
+<br>
+Delta - size of curve segments
+<br>
+Iterations - length of curves in segments
+<br>
+Stochastic Lines - whether to draw lines in a grid or randomly
+<br>
+X/Y Lines - number of lines each way to draw the grid. If stochastic is on, it draws the product of these # of lines
+<br>
+Line Width - you can make this fractional to make it fuzzy
+<br>
+X/Y Range - coords the canvas is displaying
+<br>
+X/Y Resolution - size of the canvas. leave blank to auto scale
+<br>
+Color Array - an array of colors it interpolates between
+<br>
+Color Quantiles - bigger means smoother colors, worse performance
+<br>
+Lp Norm - norm used for gradient magnitude coloring
+<br>
+X/Y Spawn - coordinates where new lines spawn
+<br>
+V1 - patlsc
+</p>
+<img src="https://visitor-badge.glitch.me/badge?page_id=https://patlsc.github.io/diffeq.html" alt="visitor badge"/>
+</div>
+</body>
+</html>
