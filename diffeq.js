@@ -115,7 +115,8 @@ function color_associate(mag, mag_quantiles, color_array) {
 	var p = 0;
 	for (var i = 0; i < mag_quantiles.length-1; i++) {
 		if (mag_quantiles[i] <= mag && mag <= mag_quantiles[i+1]) {
-			p = i;
+			amount_between = (mag-mag_quantiles[i])/(mag_quantiles[i+1]-mag_quantiles[i])
+			p = i + amount_between;
 		}
 	}
 	var k = mag_quantiles.length/color_array.length;
@@ -145,10 +146,8 @@ function color_to_hex(color) {
 
 function get_magnitude_quantiles(xprime_func, yprime_func) {
 	var mags = [];
-	for (var i = 0; i < num_background_lines_x; i++) {
-		for (var j = 0; j < num_background_lines_y; j++) {
-			//xpos = range_xcord[0]+(range_xcord[1]-range_xcord[0])*i/num_background_lines_x;
-			//ypos = range_ycord[0]+(range_ycord[1]-range_ycord[0])*j/num_background_lines_y;
+	for (var i = 0; i < Math.min(40,num_background_lines_x); i++) {
+		for (var j = 0; j < Math.min(40,num_background_lines_y); j++) {
 			xpos = random_xpos();
 			ypos = random_ypos();
 
@@ -182,7 +181,7 @@ function draw_diffeq_line(start_xcord, start_ycord, xprime_func, yprime_func) {
 		changex = derivx*delta;
 		changey = derivy*delta;
 
-		//TODO performance
+		//TODO performance, accuracy
 		new_xcord = current_xcord + changex;
 		new_ycord = current_ycord + changey;
 

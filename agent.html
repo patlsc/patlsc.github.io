@@ -115,12 +115,14 @@ class Agent {
 		this.y = y;
 		this.alive = true;
 		this.centrictype = centrictype;
+		this.deadlength = 0;
 	}
 }
 
 //blue is centric, green is humanitarian, red is greedy
 var typetocolor = {"centric":"#0000FF", "helpall":"#00FF00", "greedy":"#FF0000"};
-var centriccolor = {1:"#00F7FF", 2:"#0051FF", 3:"#9900FF", 4:"#D900FF"};
+//var centriccolor = {1:"#00F7FF", 2:"#0051FF", 3:"#9900FF", 4:"#D900FF"};
+var centriccolor = {1:"#946906", 2:"#0d81e0", 3:"#059627", 4:"#81daf0"};
 
 var canvas = document.getElementById("maincanvas");
 var ctx = canvas.getContext("2d");
@@ -309,6 +311,7 @@ function reset_agent(agent, newtype, centrictype) {
 	agent.food_recieved = 0;
 	agent.alive = true;
 	agent.centrictype = centrictype;
+	agent.deadlength = 0;
 }
 
 function step_end() {
@@ -374,6 +377,63 @@ function step_end() {
 			reset_agent(agent, agent.toresetpointer.type, agent.toresetpointer.centrictype);
 		}
 	}
+	for (agent of blocks) {
+		if (!agent.alive) {
+			agent.deadlength += 1;
+		}
+	}
+}
+
+// Convert a hex string to a byte array
+function hex_to_bytes(hex) {
+	if (hex.charAt(0) == "#") {
+		hex = hex.substring(1)
+	}
+
+    for (var bytes = [], c = 0; c < hex.length; c += 2)
+    bytes.push(parseInt(hex.substr(c, 2), 16));
+    return bytes;
+}
+
+// Convert a byte array to a hex string
+function bytes_to_hex(bytes) {
+    for (var hex = [], i = 0; i < bytes.length; i++) {
+        var current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i];
+        hex.push((current >>> 4).toString(16));
+        hex.push((current & 0xF).toString(16));
+    }
+    return "#" + hex.join("");
+}
+
+//amount is float between 0 and 100 inclusive
+function darken(hex, amount) {
+	a = hex_to_bytes(hex)
+	
+	for (var i = 0; i < a.length; i++) {
+		a[i] = a[i]*(1-(amount/100))
+	}
+
+	return bytes_to_hex(a)
+}
+
+function choose_color(agent) {
+	col = "#000000"
+	if (agent.type == "helpall") {
+		col = typetocolor["helpall"];
+	}
+	else if (agent.type == "greedy") {
+		col = typetocolor["greedy"];
+	}
+	else {
+		col = centriccolor[agent.centrictype];
+	}
+
+	if (agent.alive) {
+		return col
+	} else {
+		maxdeadlength = 5
+		return darken(col, 100*Math.min(maxdeadlength,agent.deadlength)/maxdeadlength)
+	}
 }
 
 function render() {
@@ -389,27 +449,14 @@ function render() {
 				ctx.fillStyle = typetocolor[agent.type];
 			} else {
 				ctx.fillStyle = centriccolor[agent.centrictype];
-			}*/
-
-			if (agent.type == "helpall") {
-				ctx.fillStyle = typetocolor["helpall"];
-			}
-			else if (agent.type == "greedy") {
-				ctx.fillStyle = typetocolor["greedy"];
-			}
-			else {
-				ctx.fillStyle = centriccolor[agent.centrictype];
-			}
-		} else {
-			ctx.fillStyle = "#000000";
+			}*/	
 		}
+		ctx.fillStyle = choose_color(agent)
 		
 		ctx.fillRect(agent.x*block_width, agent.y*block_height, block_width, block_height);
 	}
 
 	document.getElementById("display-turn").innerHTML = "Turn: " + String(turn);
-
-	//TODO document.getElementById("helpall").innerHTML = 
 }
 
 function proceed() {
