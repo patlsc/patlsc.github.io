@@ -41,6 +41,11 @@ var crop_lines = false;
 var show_coords = false;
 var coords_alpha = 0.1;
 
+var no_line_breaks = false;
+
+var taper_off = true;
+var taper_segments = 50;
+
 var color_array = [[0,0,255], [0,255,255], [255,255,0], [255,0,0]];
 var mag_quantiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
 var num_quantiles = 100;
@@ -86,6 +91,9 @@ function xpix_to_cord(xpix) {
 }
 function ypix_to_cord(ypix) {
 	return range_ycord[0] + (ypix*(range_ycord[1]-range_ycord[0])/cv_h);
+}
+function coords_on_screen(xpos, ypos) {
+	return (xpos >= range_xcord[0] && xpos <= range_xcord[1]) && (ypos >= range_ypos[0] && ypos <= range_ypos[1])
 }
 
 function draw_line(xpix1, ypix1, xpix2, ypix2) {
@@ -163,6 +171,9 @@ function get_magnitude_quantiles(xprime_func, yprime_func) {
 	}
 	quantiles = quantiles.filter((e) => e != undefined);
 
+	//0 is added to the start always
+	quantiles.unshift(0);
+
 	return quantiles;
 
 }
@@ -180,12 +191,24 @@ function draw_diffeq_line(start_xcord, start_ycord, xprime_func, yprime_func) {
 		derivy = yprime_func(current_xcord, current_ycord,parameter);
 		changex = derivx*delta;
 		changey = derivy*delta;
-
+		if (changex == 0 && changey == 0) {
+			count = num_cycles;
+		}
 		//TODO performance, accuracy
 		new_xcord = current_xcord + changex;
 		new_ycord = current_ycord + changey;
 
 		ctx.beginPath();
+
+		//tapering off the alpha
+		if (taper_off && Math.abs(num_cycles - count) <= taper_segments) {
+			ctx.globalAlpha = line_alpha - ((taper_segments-Math.abs(num_cycles - count))/taper_segments)*line_alpha;
+		} else if (taper_off && count <= taper_segments) {
+			ctx.globalAlpha = (count/taper_segments)*line_alpha;
+		}
+		else {
+			ctx.globalAlpha = line_alpha;
+		}
 
 		//TODO lines with maximum color appearing on the edges
 		ctx.strokeStyle = color_to_hex(color_associate(get_magnitude(derivx, derivy), mag_quantiles, color_array));
@@ -199,10 +222,10 @@ function draw_diffeq_line(start_xcord, start_ycord, xprime_func, yprime_func) {
 			var xcord = current_xcord;
 			var ycord = current_ycord;
 			if ((xcord >= range_xcord[1] && changex > 0) || (xcord <= range_xcord[0] && changex < 0)) {
-				count = num_cycles;
+				count = num_cycles-1;
 			}
 			if ((ycord >= range_ycord[1] && changey > 0) || (ycord <= range_ycord[0] && changey < 0)) {
-				count = num_cycles;
+				count = num_cycles-1;
 			}
 		}
 	}
@@ -270,9 +293,13 @@ function draw_coordinates() {
 }
 
 function draw_mouse_line(event) {
-	var xpix = event.clientX;
+	var xoffset = document.getElementById("settings").getBoundingClientRect()["right"];
+	var xpix = event.clientX - xoffset;
 	var ypix = event.clientY;
-	draw_realtime_line(xpix_to_cord(xpix), ypix_to_cord(ypix), xprime, yprime);
+	var xcord = xpix_to_cord(xpix);
+	var ycord = ypix_to_cord(ypix);
+	console.log("clicked on position: " + xcord + "," + ycord)
+	draw_realtime_line(xcord, ycord, xprime, yprime);
 }
 
 
@@ -309,10 +336,12 @@ function change_color_preset() {
 }
 
 function random_spawn_xpos() {
-	return randfloat(range_spawn_xcord[0] < 0 ? range_spawn_xcord[0]*1.25 : range_spawn_xcord[0]*0.75, range_spawn_xcord[1] < 0 ? range_spawn_xcord[1]*0.75 : range_spawn_xcord[1]*1.25);
+	//return randfloat(range_spawn_xcord[0] < 0 ? range_spawn_xcord[0]*1.25 : range_spawn_xcord[0]*0.75, range_spawn_xcord[1] < 0 ? range_spawn_xcord[1]*0.75 : range_spawn_xcord[1]*1.25);
+	return randfloat(range_spawn_xcord[0], range_spawn_xcord[1]);
 }
 function random_spawn_ypos() {
-	return randfloat(range_spawn_ycord[0] < 0 ? range_spawn_ycord[0]*1.25 : range_spawn_ycord[0]*0.75, range_spawn_ycord[1] < 0 ? range_spawn_ycord[1]*0.75 : range_spawn_ycord[1]*1.25);
+	//return randfloat(range_spawn_ycord[0] < 0 ? range_spawn_ycord[0]*1.25 : range_spawn_ycord[0]*0.75, range_spawn_ycord[1] < 0 ? range_spawn_ycord[1]*0.75 : range_spawn_ycord[1]*1.25);
+	return randfloat(range_spawn_ycord[0], range_spawn_ycord[1]);
 }
 function random_xpos() {
 	return randfloat(range_xcord[0], range_xcord[1]);
@@ -327,24 +356,72 @@ function draw_random_line(xprime_func, yprime_func) {
 	draw_diffeq_line(xpos, ypos, xprime_func, yprime_func);
 }
 
+function draw_random_line_outside_canvas(xprime_func, yprime_func) {
+	//TODO
+	xleft = [range_spawn_xcord[0], range_xcord[0]];
+	isxleft = xleft[0] < xleft[1];
+
+	xright = [range_xcord[1], range_spawn_xcord[1]];
+	isxright = xright[0] < xright[1];
+
+	xleft_weight = (xleft[1] - xleft[0])/(xleft[1]-xleft[0]+xright[1]-xright[0]);
+	if (!isxright) {
+		xleft_weight = 1;
+	}
+	if (!isxleft) {
+		xleft_weight = 0;
+	}
+
+	xpos = Math.random() > xleft_weight ? randfloat(xleft[0],xleft[1]) : randfloat(xright[0], xright[1]);
+
+	yleft = [range_spawn_ycord[0], range_ycord[0]];
+	isyleft = yleft[0] < yleft[1];
+
+	yright = [range_ycord[1], range_spawn_ycord[1]];
+	isyright = yright[0] < yright[1];
+
+	yleft_weight = (yleft[1] - yleft[0])/(yleft[1]-yleft[0]+yright[1]-yright[0]);
+	if (!isyright) {
+		yleft_weight = 1;
+	}
+	if (!isyleft) {
+		yleft_weight = 0;
+	}
+
+	ypos = Math.random() > yleft_weight ? randfloat(yleft[0],yleft[1]) : randfloat(yright[0], yright[1]);
+	var ypos = random_spawn_ypos();
+	draw_diffeq_line(xpos, ypos, xprime_func, yprime_func);
+}
+
 function draw_background_lines(xprime_func, yprime_func) {
 	ctx.globalAlpha = line_alpha;
 	if (draw_background_setting) {
-		if (!stochastic_lines) {
-			for (var i = 0; i < num_background_lines_x; i++) {
-				for (var j = 0; j < num_background_lines_y; j++) {
-					xpos = range_spawn_xcord[0]+(range_spawn_xcord[1]-range_spawn_xcord[0])*i/num_background_lines_x;
-					ypos = range_spawn_ycord[0]+(range_spawn_ycord[1]-range_spawn_ycord[0])*j/num_background_lines_y;
+		if (!no_line_breaks) {
+			if (!stochastic_lines) {
+				for (var i = 0; i < num_background_lines_x; i++) {
+					for (var j = 0; j < num_background_lines_y; j++) {
+						xpos = range_spawn_xcord[0]+(range_spawn_xcord[1]-range_spawn_xcord[0])*i/num_background_lines_x;
+						ypos = range_spawn_ycord[0]+(range_spawn_ycord[1]-range_spawn_ycord[0])*j/num_background_lines_y;
 
-					draw_diffeq_line(xpos, ypos, xprime_func, yprime_func);
+						draw_diffeq_line(xpos, ypos, xprime_func, yprime_func);
+					}
 				}
 			}
-		}
-		else {
-			var num_lines = num_background_lines_x * num_background_lines_y;
+			else {
+				var num_lines = num_background_lines_x * num_background_lines_y;
 
-			for (var i = 0; i < num_lines; i++) {
-				draw_random_line(xprime_func, yprime_func);
+				for (var i = 0; i < num_lines; i++) {
+					draw_random_line(xprime_func, yprime_func);
+				}
+			}
+		} else {
+			//no line breaks
+			if (stochastic_lines) {
+				var num_lines = num_background_lines_x * num_background_lines_y;
+
+				for (var i = 0; i < num_lines; i++) {
+					draw_random_line_outside_canvas(xprime_func, yprime_func);
+				}
 			}
 		}
 	}
@@ -404,6 +481,8 @@ function update_settings() {
 	crop_lines = document.getElementById("crop").checked;
 	show_coords = document.getElementById("coords").checked;
 	line_alpha = parseFloat(document.getElementById("lalpha").value);
+	taper_off = document.getElementById("taperoff").checked;
+	taper_segments = parseInt(document.getElementById("taperlength").value);
 	coords_alpha = parseFloat(document.getElementById("coordsalpha").value);
 	//TODO
 	num_quantiles = parseInt(document.getElementById("quantiles").value);
