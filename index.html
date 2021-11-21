@@ -77,7 +77,7 @@ code {
       <code>
       >start
       %background = bk_default
-      narrate: "You decide to rest for a while."
+      narrate("You decide to rest for a while.")
       fade(black)
 
       if %timeOfDay == "day":
@@ -85,20 +85,20 @@ code {
       else:
         %timeOfDay = "day"
 
-      narrate: "You arrive at a split road."
+      narrate("You arrive at a split road.")
       choose("Take the left path":b,
              "Take the right path":c)
 
       >b
-      narrate: "You go left."
+      narrate("You go left.")
       goto d
 
       >c
-      narrate: "You go right."
+      narrate("You go right.")
       goto d
 
       >d
-      narrate: "End."
+      narrate("End.")
       </code>
     </div>
     <div>
@@ -110,7 +110,7 @@ code {
 </div>
 
 <div class="patcentral-light">
-  <h2>Resume</h2>
+  <h2><a href="resume.pdf">Resume</a></h2>
 </div>
 
 <div class="patfooter">
