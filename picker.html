@@ -1,5 +1,6 @@
 <html>
 <head>
+<title>Obscure Anime Searcher</title>
 <style>
 .inputarea {
 	padding: 20px;
@@ -149,8 +150,10 @@ function get_valid_entries() {
 			continue;
 		}
 		if (is_selecting_by_genre) {
-			if (!entries[i]["genre"].includes(selected_genre)) {
-				continue;
+			if (entries[i]["genres"]) {
+				if (!entries[i]["genres"].includes(selected_genre)) {
+					continue;
+				}
 			}
 		}
 		valid_entries.push(entries[i]);
