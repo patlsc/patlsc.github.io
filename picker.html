@@ -2,46 +2,79 @@
 <head>
 <title>Obscure Anime Searcher</title>
 <style>
+.blockarea {
+	width: auto;
+}
 .inputarea {
+	display:  inline-block;
+	width:  400px;
 	padding: 20px;
+}
+#results {
+	padding: 20px;
+}
+#header {
+	padding: 20px;
+	background-color: #DDDDDD;
+}
+.result-box {
+	border: 1px black;
 }
 </style>
 </head>
 <body>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<div id="header">
 <h1>Obscure Anime Picker</h1>
 <p>A myanimelist searcher that allows filtering by popularity and score. This makes it easy to get obscure shows which are hard to find normally.</p> <img src="https://visitor-badge.glitch.me/badge?page_id=patlscgithubsite" alt="visitor badge"/>
-<br>
-<div class="inputarea">
-Minimum Score <input id="input_minscore" type="text" value="6">
 </div>
-<div class="inputarea">
-Maximum Score <input id="input_maxscore" type="text" value="8">
+<div class="blockarea">
+	<div class="inputarea">
+	Minimum Score <input id="input_minscore" type="text" value="6">
+	</div>
+	<div class="inputarea">
+	Maximum Score <input id="input_maxscore" type="text" value="8">
+	</div>
 </div>
-<br>
-<div class="inputarea">
-Minimum Members <input id="input_minmembers" type="text" value="1000">
+<div class="blockarea">
+	<div class="inputarea">
+	Minimum Members <input id="input_minmembers" type="text" value="100">
+	</div>
+	<div class="inputarea">
+	Maximum Members <input id="input_maxmembers" type="text" value="40000">
+	</div>
 </div>
-<div class="inputarea">
-Maximum Members <input id="input_maxmembers" type="text" value="100000">
+<div class="blockarea">
+	<div class="inputarea">
+	Minimum Episodes <input id="input_minepisodes" type="text" value="0">
+	</div>
+	<div class="inputarea">
+	Maximum Episodes <input id="input_maxepisodes" type="text" value="1000">
+	</div>
 </div>
-<br>
-<div class="inputarea">
-Number of Anime Chosen <input id="input_numchosen" type="text" value="1">
+<div class="blockarea">
+	<div class="inputarea">
+	Filter by Genre <input type="checkbox" id="input_is_selecting_by_genre">
+	<select id="input_genreselector"></select>
+	</div>
+	<div class="inputarea">
+	Filter by Type <input type="checkbox" id="input_is_selecting_by_type" checked="true">
+	<select id="input_typeselector" value="TV"></select>
+	</div>
 </div>
-<br>
-<div class="inputarea">
-Filter By Genre <input type="checkbox" id="input_is_selecting_by_genre">
-Genre <select id="input_genreselector"></select>
+<div class="blockarea">
+	<div class="inputarea">
+	Number of Anime Chosen <input id="input_numchosen" type="text" value="1">
+	</div>
+	<div class="inputarea">
+		Exclude R-rated <input type="checkbox" id="input_exclude_adult">
+	</div>
 </div>
-<br>
 <div class="inputarea">
 <button onclick="pick_random_anime_button()">Pick Random Anime</button>
 <Button onclick="get_all_anime_button()">Get All Anime</Button>
 </div>
-<div id="results">
-
-</div>
+<div id="results"></div>
 <script>
 entries = [];
 genres = new Map();
@@ -49,11 +82,16 @@ genres_by_popularity = [];
 types = new Set();
 minscore = 6;
 maxscore = 8;
-minmembers = 1000;
-maxmembers = 100000;
+minmembers = 100;
+maxmembers = 40000;
+minepisodes = 0;
+maxepisodes = 1000;
 numchosen = 1;
 is_selecting_by_genre = false;
 selected_genre = "";
+is_selecting_by_type = true;
+selected_type = "TV";
+exclude_adult = false;
 
 MAX_ANIME_SHOWN = 100;
 
@@ -61,9 +99,14 @@ input_is_selecting_by_genre = document.getElementById("input_is_selecting_by_gen
 input_genreselector = document.getElementById("input_genreselector");
 input_minmembers = document.getElementById("input_minmembers");
 input_maxmembers = document.getElementById("input_maxmembers");
+input_minepisodes = document.getElementById("input_minepisodes");
+input_maxepisodes = document.getElementById("input_maxepisodes");
 input_numchosen = document.getElementById("input_numchosen");
 input_minscore = document.getElementById("input_minscore");
 input_maxscore = document.getElementById("input_maxscore");
+input_is_selecting_by_type = document.getElementById("input_is_selecting_by_type");
+input_typeselector = document.getElementById("input_typeselector");
+input_exclude_adult = document.getElementById("input_exclude_adult");
 
 results_div = document.getElementById("results");
 
@@ -78,16 +121,18 @@ function main() {
 	input_lines = input_data.split("\n");
 	for (var i = 1; i < input_lines.length; i++) {
 		if (input_lines[i] != "") {
-			var pieces = input_lines[i].split(",");
+			var pieces = input_lines[i].replace('"\r','').replace(", ",",").split(",");
 			var x = {};
 			x["anime_id"] = parseInt(pieces[0]);
 			x["name"] = pieces[1];
-			x["members"] = parseInt(pieces[pieces.length-1].substring(0,pieces[pieces.length-1].length-2));
-			x["rating"] = parseFloat(pieces[pieces.length-2]);
-			x["episodes"] = parseInt(pieces[pieces.length-3]);
-			x["type"] = pieces[pieces.length-4];
+			x["rating"] = parseFloat(pieces[2]);
+			x["type"] = pieces[3];
+			x["episodes"] = parseInt(pieces[4]);
+			x["date"] = pieces[5];
+			x["adult"] = parseInt(pieces[6]) == 1 ? true : false;
+			x["members"] = parseInt(pieces[7]);
 			x["genres"] = [];
-			for (var k = 2; k < pieces.length-4; k++) {
+			for (var k = 8; k < pieces.length; k++) {
 				s = pieces[k];
 				if (s[s.length-1]=='"') {
 					s = s.substring(0,s.length-1);
@@ -124,6 +169,18 @@ function main() {
 	    option.text = genres_by_popularity[i];
 	    input_genreselector.appendChild(option);
 	}
+
+	types_list = ['TV', 'Movie', 'OVA', 'Special', 'Music', 'ONA', ''];
+	for (var i = 0; i < types_list.length; i++) {
+	    var option = document.createElement("option");
+	    option.value = types_list[i];
+	    option.text = types_list[i];
+	    input_typeselector.appendChild(option);
+	}
+}
+
+function add_commas_to_int(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 function update_inputs() {
@@ -134,6 +191,11 @@ function update_inputs() {
 	numchosen = parseInt(input_numchosen.value);
 	is_selecting_by_genre = input_is_selecting_by_genre.checked;
 	selected_genre = input_genreselector.value;
+	is_selecting_by_type = input_is_selecting_by_type.checked;
+	selected_type = input_typeselector.value;
+	exclude_adult = input_exclude_adult.checked;
+	minepisodes = parseInt(input_minepisodes.value);
+	maxepisodes = parseInt(input_maxepisodes.value);
 }
 
 function random_int(max) {
@@ -143,20 +205,39 @@ function random_int(max) {
 function get_valid_entries() {
 	valid_entries = [];
 	for (var i = 0; i < entries.length; i++) {
-		if (entries[i]["rating"] > maxscore || entries[i]["rating"] < minscore) {
-			continue;
-		}
-		if (entries[i]["members"] > maxmembers || entries[i]["members"] < minmembers) {
-			continue;
-		}
-		if (is_selecting_by_genre) {
-			if (entries[i]["genres"]) {
-				if (!entries[i]["genres"].includes(selected_genre)) {
+		if (entries[i]) {
+			if (entries[i]["rating"]) {
+				if (entries[i]["rating"] > maxscore || entries[i]["rating"] < minscore) {
 					continue;
 				}
 			}
+			if (entries[i]["members"]) {
+				if (entries[i]["members"] > maxmembers || entries[i]["members"] < minmembers) {
+					continue;
+				}
+			}
+			if (is_selecting_by_genre) {
+				if (entries[i]["genres"]) {
+					if (!entries[i]["genres"].includes(selected_genre)) {
+						continue;
+					}
+				}
+			}
+			if (is_selecting_by_type) {
+				if (entries[i]["type"]) {
+					if (entries[i]["type"] != selected_type) {
+						continue;
+					}
+				}
+			}
+			if (exclude_adult && entries[i]["adult"]) {
+				continue;
+			}
+			if (entries[i]["episodes"] != "Unknown" && (entries[i]["episodes"] > maxepisodes || entries[i]["episodes"] < minepisodes)) {
+				continue;
+			}
+			valid_entries.push(entries[i]);
 		}
-		valid_entries.push(entries[i]);
 	}
 	return valid_entries;
 }
@@ -172,8 +253,13 @@ function get_random_choices() {
 }
 
 function get_entry_string(entry) {
-	var s = "<div><h3><a href='https://myanimelist.net/anime/" + entry["anime_id"] + "'>" + entry["name"] + "</a></h3>";
-	s += "Rating: " + entry["rating"] + "<br>Members: " + entry["members"];
+	var s = "<div class='result-box'><h3><a href='https://myanimelist.net/anime/" + entry["anime_id"] + "'>" + entry["name"] + "</a></h3>";
+	s += "Rating: " + entry["rating"] + "<br>Members: " + add_commas_to_int(entry["members"]) + "<br>";
+	if (entry["date"] != "Unknown") {
+		s += entry["date"] + " ";
+	}
+	s += entry["type"] + "<br>";
+	s += entry["episodes"] + " Episodes";
 	s += "</div>";
 	return s;
 }
@@ -183,10 +269,15 @@ function pick_random_anime_button() {
 	results_div.innerHTML = "";
 	total_html = "";
 	c = get_random_choices();
-	for (var i = 0; i < c.length; i++) {
-		total_html += get_entry_string(c[i]);
+	if (!c || c == [] || !c[0]) {
+		results_div.innerHTML = "No results found";
+		return;
+	} else {
+		for (var i = 0; i < c.length; i++) {
+			total_html += get_entry_string(c[i]);
+		}
+		results_div.innerHTML = total_html;
 	}
-	results_div.innerHTML = total_html;
 }
 
 function get_all_anime_button() {
@@ -194,10 +285,15 @@ function get_all_anime_button() {
 	results_div.innerHTML = "";
 	total_html = "";
 	valid_entries = get_valid_entries();
-	for (var i = 0; i < Math.min(MAX_ANIME_SHOWN,valid_entries.length); i++) {
-		total_html += get_entry_string(valid_entries[i]);
+	if (!valid_entries || valid_entries == [] || !valid_entries[0]) {
+		results_div.innerHTML = "No results found";
+		return;
+	} else {
+		for (var i = 0; i < Math.min(MAX_ANIME_SHOWN,valid_entries.length); i++) {
+			total_html += get_entry_string(valid_entries[i]);
+		}
+		results_div.innerHTML = total_html;
 	}
-	results_div.innerHTML = total_html;
 }
 </script>
 </body>
