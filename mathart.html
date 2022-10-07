@@ -1,0 +1,75 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<style>
+.MathJax_Display { 
+    text-align: left !important;
+    display: inline !important;
+}
+body {
+    background-color: #bbbbbb;
+    margin: 0;
+}
+#main-div {
+    width: 1000px;
+    height: 3000px;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 16px;
+}
+</style>
+</head>
+<body>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+<div id="main-div">
+<header>
+<center><h1>MathArt</h1></center>
+</header>
+MathArt is a series of C++ scripts that I am making for creating mathematical artwork. It is high performance and multithreaded, and will support 2d and 3d functions as well as stochastic and dynamical systems.
+
+<h2>Fractals</h2>
+<p>
+The mandelbrot set is the subset of the complex numbers given by
+</p>
+\[ \{ c \in \mathbb{C} : |f_c(0)|,|f_c^2(0)|,... \text{ is bounded} \}, \quad f_c(z)=z^2+c \]
+<p>
+More specifically, for rendering a mandelbrot one defines the mandelbrot function F as the number of iterations when it exceeds some massive number M
+</p>
+
+\[ F(c) = \min \{ k \in \mathbb{N} : |f_c^k(0)|>M \} \]
+
+<p>
+In fact, you can create mandelbrot variants with other functions such as
+</p>
+
+\[ f_c(z)=z \cos(z)+c \]
+
+<p>
+Which gives the fractal below
+</p>
+<center>
+<img src="preview.jpg" width="500">
+</center>
+
+<p>
+MathArt can render this "trigonometric mandelbrot" in 1080p in about 0.28 seconds. The standard mandelbrot in 1080p takes about 14 milliseconds (so ~70 frames per second). The coloring algorithm is automatically determined from a list of the three colors red, green, and blue.
+</p>
+
+<h2>Differential Equations</h2>
+
+<center>
+<img src="https://lh3.googleusercontent.com/rE_Nif0lxz6O15aYnY5xM18PG2RH1nWa8qmO8cVaDMF9-Wj0KllQYqdNnBz3uklv5cYsMeDnqud28ugtEu-DV2l3a5ju4wyRu6fZ0pCkjL8ni1TsDUw_YnyZHojVriP65NZQaSM94g=w2400?source=screenshot.guru" width="500">
+</center>
+
+I previously made an interactive web-based differential equation renderer <a href="https://patlsc.github.io/diffeq.html">https://patlsc.github.io/diffeq.html</a>, however its performance became stretched when doing massive (QHD, 4k, etc.) renders. Whereas the javascript one takes a few seconds for most images, this can render it in real time. The downside is that there is no GUI, but I aim to change this in the future.
+
+<h2>Stochastic Processes</h2>
+
+
+
+</div>
+</body>
+</html>
