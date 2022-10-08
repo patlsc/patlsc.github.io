@@ -17,6 +17,15 @@ body {
     margin: 0;
     padding: 16px;
 }
+.grid { 
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-gap: 20px;
+  align-items: start;
+  }
+.grid img {
+  max-width: 100%;
+}
 </style>
 </head>
 <body>
@@ -31,6 +40,20 @@ body {
 </center>
 </header>
 MathArt is a series of C++ scripts that I am making for creating mathematical artwork. It is high performance and multithreaded, and will support 2d and 3d functions as well as stochastic and dynamical systems.
+
+<h2>Differential Equations</h2>
+
+<div class="grid">
+<img src="content/web1.png" width="500">
+<img src="content/web2.png" width="500">
+<img src="content/web3.jpg" width="500">
+<img src="content/web4.png" width="500">
+<img src="content/web5.jpg" width="500">
+<img src="content/web6.jpg" width="500">
+</div>
+
+I previously made an interactive web-based differential equation renderer <a href="https://patlsc.github.io/diffeq.html">https://patlsc.github.io/diffeq.html</a>, however its performance became stretched when doing massive (QHD, 4k, etc.) renders. Whereas the javascript one takes a few seconds for most images, MathArt can render it in real time. I aim to add a GUI for the C++ side in the future.
+
 
 <h2>Fractals</h2>
 <p>
@@ -58,27 +81,12 @@ Which gives the fractal below
 
 <p>
 MathArt can render this "trigonometric mandelbrot" in 1080p in about 0.28 seconds. The standard mandelbrot in 1080p takes about 14 milliseconds (so ~70 frames per second). The coloring algorithm is automatically determined from a list of the three colors red, green, and blue.
-</p>
-
-<h2>Differential Equations</h2>
-
-<center>
-<img src="content/web1.png" width="500">
-<img src="content/web2.png" width="500">
-<img src="content/web3.jpg" width="500">
-</center>
-<center>
-<img src="content/web4.png" width="500">
-<img src="content/web5.jpg" width="500">
-<img src="content/web6.jpg" width="500">
-</center>
-
-I previously made an interactive web-based differential equation renderer <a href="https://patlsc.github.io/diffeq.html">https://patlsc.github.io/diffeq.html</a>, however its performance became stretched when doing massive (QHD, 4k, etc.) renders. Whereas the javascript one takes a few seconds for most images, MathArt can render it in real time. I aim to add a GUI for the C++ side in the future.
 
 <h2>Stochastic Processes</h2>
 
+Work in progress.
 
-
+</p>
 </div>
 </body>
 </html>
