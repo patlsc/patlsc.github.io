@@ -7,19 +7,31 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 <style>
 .patheader {
-  padding-top: 75px;
-  padding-bottom: 75px;
-  padding-left: 25px;
-  padding-right: 25px;
+  height: 300px; /* or any height you want for header */
+  background-size: cover;      /* fills header without distortion */
+  background-position: center; /* centers the important part of the image */
+  background-repeat: no-repeat;
+  background-attachment: scroll; /* change to fixed for parallax effect */
+  position: relative;
   background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
                   url("https://patlsc.github.io/content/diffeq.jpg");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 100% auto;
   background-color: #000000;
   color: #ffffff;
   background-attachment: fixed;
   text-align: center;
+}
+.patheader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3); /* optional: dark overlay for text contrast */
+}
+.patheader-content {
+  position: relative;
+  z-index: 1; /* keeps text above overlay */
+  color: white;
+  text-align: center;
+  padding: 2rem;
 }
 .patcentral-dark {
   padding: 25px;
@@ -42,7 +54,7 @@ code {
   <body>
 
 <section class="patheader" style="margin:0px">
-<h1>patlsc</h1>
+  <div class="patheader-content"><h1>patlsc</h1></div>
 </section>
 <div class="patcentral-light">
   <div>
